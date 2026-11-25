@@ -1,5 +1,7 @@
 # dsh-carsi-papers
 
+<img src="docs/images/icon-180.png" width="96" alt="plugin icon">
+
 [![npm version](https://img.shields.io/npm/v/dsh-carsi-papers)](https://www.npmjs.com/package/dsh-carsi-papers)
 [![license](https://img.shields.io/npm/l/dsh-carsi-papers)](LICENSE)
 [![CI](https://github.com/cannotgetaname/dsh-carsi-papers/actions/workflows/ci.yml/badge.svg)](https://github.com/cannotgetaname/dsh-carsi-papers/actions/workflows/ci.yml)
