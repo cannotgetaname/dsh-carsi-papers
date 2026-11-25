@@ -1,11 +1,45 @@
 # dsh-carsi-papers
 
+[![npm version](https://img.shields.io/npm/v/dsh-carsi-papers)](https://www.npmjs.com/package/dsh-carsi-papers)
+[![license](https://img.shields.io/npm/l/dsh-carsi-papers)](LICENSE)
+[![CI](https://github.com/cannotgetaname/dsh-carsi-papers/actions/workflows/ci.yml/badge.svg)](https://github.com/cannotgetaname/dsh-carsi-papers/actions/workflows/ci.yml)
+[![node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](package.json)
+
+English | [中文](README.zh.md)
+
+
 Campus-subscribed literature access for DeepSeek Harness, driven through a dedicated browser.
 
 Open-access finders stop where the paywall starts. Campus subscriptions live behind an institutional
 sign-in (CARSI / Shibboleth) or a campus IP, so this plugin keeps its own Chrome profile with a local
 debugging port and lets the agent work inside that authenticated session: search the database, read
 the record, download the subscribed PDF, verify what arrived, and save it with a usable name.
+
+## Why this exists
+
+Literature agents usually stop at open-access copies and preprints, because that is all the public
+APIs return. The papers you actually need are behind a campus subscription, and that subscription is
+tied to a browser session: a CARSI / Shibboleth sign-in, or a campus IP.
+
+This plugin keeps its own Chrome profile with a local debugging port, so the agent works **inside that
+authenticated session**: search the database with its own API, download the subscribed PDF, verify the
+bytes, save it with a usable name, and export citations. Paywalls and robot checks are reported, never
+bypassed.
+
+## Demo
+
+```
+papers_search   query="structure-function relationship spiking neural network"
+                publishers=["ieee", "springer"] rows=4
+→ 8 merged hits, every record labelled by the databases that returned it
+
+papers_fetch    publisher=springer url=https://link.springer.com/article/10.1038/s41467-025-62202-1
+→ saved: refs/2025-Yang-Spiking dynamics of individual neurons ….pdf
+  2.4 MB · 12 pages · verified PDF
+
+papers_export   format=bibtex
+→ refs/carsi-records.bib (downloaded records only)
+```
 
 ## Tools
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Repository, homepage and issue tracker metadata; English and Chinese README with badges and a demo.
+- 18 GitHub topics so the plugin is discoverable from searches for DSH, CARSI, IEEE, Zotero and
+  literature review.
+
 ## 0.3.0
 
 - Multi-database search: `papers_search` accepts `publishers` and merges results by DOI (or title),
