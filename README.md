@@ -30,6 +30,11 @@ bypassed.
 
 ## Demo
 
+![IEEE Xplore results with the campus subscription recognized](docs/images/search-results.png)
+
+The header reads **Access provided by: Tianjin University of Technology** — that session is what the
+agent searches and downloads through.
+
 ```
 papers_search   query="structure-function relationship spiking neural network"
                 publishers=["ieee", "springer"] rows=4
