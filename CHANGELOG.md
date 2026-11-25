@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.3.1
+## 0.3.2
 
 - Repository, homepage and issue tracker metadata; English and Chinese README with badges and a demo.
+- First public release: GitHub repository, badges, 18 topics.
 - 18 GitHub topics so the plugin is discoverable from searches for DSH, CARSI, IEEE, Zotero and
   literature review.
 
