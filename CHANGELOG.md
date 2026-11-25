@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+
+- `cnki` adapter: search through CNKI's own grid endpoint and download through the article page's
+  PDF button (verified: 1.7 MB / 10 pages). Network-first publications without a PDF are reported.
+- `npm run capture`: dump DOM, screenshot, and XHR request/response bodies for reverse-engineering a
+  database offline.
+- Challenge detection now requires an actual verification page (URL or title) instead of matching
+  hidden text that CNKI embeds in article pages.
+- Tests guard that no page function calls another page function — the failure mode behind two real
+  bugs this round.
+
 ## 0.3.3
 
 - `papers_zotero`: write the session's records into the local Zotero library through its local API,

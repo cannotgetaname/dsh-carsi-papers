@@ -1,6 +1,6 @@
 /** Page-function tests: a real headless Chrome renders fixtures, no network needed. */
 import { ADAPTERS, clickByLabel, findInstitutionalEntry, readAccess, readMetadata } from '../lib/papers.js'
-import { sdSearch, springerSearch } from '../lib/page-scripts.js'
+import { cnkiParseGrid, sdSearch, springerSearch } from '../lib/page-scripts.js'
 import { openHtml } from './helpers.mjs'
 import {
   articleMetaHtml,
@@ -9,6 +9,7 @@ import {
   institutionHtml,
   loginEntryHtml,
   paywallHtml,
+  cnkiGridHtml,
   sdSearchHtml,
   springerSearchHtml,
 } from './fixtures.mjs'
@@ -71,6 +72,18 @@ export default async function run(t, browser) {
   const paywall = await readAccess(paywallPage)
   await paywallPage.close()
   t.ok('paywall detected', paywall.paywalled)
+
+  t.section('CNKI grid parsing')
+  const cnkiPage = await openHtml(browser, cnkiGridHtml)
+  const cnki = await cnkiPage.call(cnkiParseGrid, cnkiGridHtml)
+  await cnkiPage.close()
+  t.equal('reads the hit count', cnki.total, 514)
+  t.equal('returns both rows', cnki.records.length, 2)
+  t.equal('keeps the title attribute', cnki.records[0].title, '基于微环与相变材料的光学脉冲神经网络加速器')
+  t.equal('keeps the venue', cnki.records[0].venue, '中国激光')
+  t.equal('extracts the year', cnki.records[0].year, '2026')
+  t.equal('unwraps the author cell', cnki.records[0].authors[0], '何香玉郭鹏星卢冰')
+  t.equal('flags free content', cnki.records[1].access, 'available')
 
   t.section('institutional sign-in entry')
   const loginPage = await openHtml(browser, loginEntryHtml)

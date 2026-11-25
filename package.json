@@ -1,6 +1,6 @@
 {
   "name": "dsh-carsi-papers",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "type": "module",
   "description": "Drive your own browser through the campus CARSI sign-in to search subscribed literature databases and download their full texts.",
   "keywords": [

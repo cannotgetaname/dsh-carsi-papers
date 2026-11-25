@@ -38,7 +38,7 @@ export default async function run(t) {
   )
 
   t.section('adapters')
-  t.deepEqual('three adapters registered', ADAPTERS.map(adapter => adapter.name), ['ieee', 'springer', 'sd'])
+  t.deepEqual('four adapters registered', ADAPTERS.map(adapter => adapter.name), ['ieee', 'springer', 'sd', 'cnki'])
   for (const adapter of ADAPTERS) {
     t.ok(`${adapter.name} has the required shape`,
       Boolean(adapter.label && adapter.origin && typeof adapter.match === 'function'
@@ -49,6 +49,7 @@ export default async function run(t) {
   t.ok('sd matches its host', resolveAdapter('https://www.sciencedirect.com/science/article/pii/X')?.name === 'sd')
   t.ok('unknown host resolves to nothing', resolveAdapter('https://example.com/x') === undefined)
   t.ok('name lookup works', resolveAdapter('sd')?.name === 'sd')
+  t.ok('cnki matches its host', resolveAdapter('https://kns.cnki.net/kcms2/article/abstract?v=x')?.name === 'cnki')
 
   t.section('page functions stay self-contained')
   const names = Object.keys(pageScripts).filter(key => typeof pageScripts[key] === 'function')
@@ -56,6 +57,9 @@ export default async function run(t) {
   for (const name of names) {
     const source = pageScripts[name].toString()
     t.ok(`${name} has no module imports`, !/\bimport\s|\brequire\s*\(|\bmodule\.exports\b/.test(source))
+    const others = names.filter(other => other !== name)
+    const leaked = others.filter(other => new RegExp(`\\b${other}\\b`).test(source))
+    t.deepEqual(`${name} does not call other page functions`, leaked, [])
   }
 
   t.section('record merging')

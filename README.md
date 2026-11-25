@@ -81,10 +81,21 @@ downloads directory, ready to drag into Zotero.
 | `ieee` (IEEE Xplore) | site REST endpoint | stamped PDF endpoint |
 | `springer` (Springer Nature Link) | result page DOM | article PDF link |
 | `sd` (ScienceDirect) | result page DOM | signed asset URL, fetched in page |
+| `cnki` (中国知网) | site grid endpoint (HTML fragment) | article page `#pdfDown` button |
 
 Adding a database means adding one object to `ADAPTERS` in `lib/papers.js`: `origin`, `match`,
 `search(page, query, options)`, `pdf(page, record)`, and optionally `articleUrl(record)` and
 `metadata(page)`.
+
+## Debugging an adapter
+
+```sh
+npm run capture -- <url> [name] [--wait=6000]
+```
+
+Saves the rendered DOM, a screenshot, the page metadata, and every XHR/Fetch response (including
+request bodies) under `debug/<name>/`, so a new database can be reverse-engineered offline and its
+markup turned into a fixture for `npm test`.
 
 ## Behaviour worth knowing
 

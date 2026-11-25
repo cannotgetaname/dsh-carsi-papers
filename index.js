@@ -440,8 +440,10 @@ export function apply(ctx, config = {}) {
       try {
         ({ buffer, contentType } = await adapter.pdf(page, record))
       } catch (error) {
-        await needsHuman(page, `${adapter.label} 下载`).catch(() => {})
-        throw error
+        // A challenge can appear mid-flow; wait for the user, then retry once.
+        const waited = await needsHuman(page, `${adapter.label} 下载`).catch(() => null)
+        if (!waited?.waitedForHuman) throw error
+        ({ buffer, contentType } = await adapter.pdf(page, record))
       }
       const pdf = inspectPdf(buffer)
       if (!pdf.isPdf) {

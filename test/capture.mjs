@@ -27,11 +27,27 @@ const browser = await Browser.connect(9222)
 const page = await browser.newPage('about:blank')
 
 const network = []
+const requestBodies = new Map()
 const off = page.onEvent(message => {
+  if (message.method === 'Network.requestWillBeSent') {
+    const { request, type } = message.params
+    if (type === 'XHR' || type === 'Fetch') {
+      requestBodies.set(request.url, { method: request.method, postData: request.postData ?? null })
+    }
+    return
+  }
   if (message.method !== 'Network.responseReceived') return
   const { response, type } = message.params
   if (type !== 'XHR' && type !== 'Fetch') return
-  network.push({ type, status: response.status, mimeType: response.mimeType, url: response.url })
+  const sent = requestBodies.get(response.url)
+  network.push({
+    type,
+    status: response.status,
+    mimeType: response.mimeType,
+    url: response.url,
+    method: sent?.method ?? null,
+    postData: sent?.postData ?? null,
+  })
 })
 
 await page.send('Network.enable')

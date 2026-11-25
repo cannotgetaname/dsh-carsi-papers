@@ -67,3 +67,25 @@ export const loginEntryHtml = `<!doctype html><meta charset="utf-8"><title>Sign 
   <a href="/institution/login?entityID=https://idp.example.edu/idp/shibboleth">Institutional Sign In</a>
   <button>Personal Sign In</button>
 </body>`
+
+export const cnkiGridHtml = `<div id="briefBox">
+  <div id="countPageDiv"><span class="pagerTitleCell"><span>共找到</span><em>514</em><span>条结果</span></span></div>
+  <table class="result-table-list"><tbody>
+    <tr>
+      <td class="seq">1</td>
+      <td class="name"><a title="基于微环与相变材料的光学脉冲神经网络加速器" href="https://kns.cnki.net/kcms2/article/abstract?v=AAA">基于微环与相变材料的光学脉冲神经网络加速器</a></td>
+      <td class="author">何香玉郭鹏星卢冰</td>
+      <td class="source">中国激光</td>
+      <td class="date">2026-09-10</td>
+      <td class="data">期刊</td>
+    </tr>
+    <tr>
+      <td class="seq">2</td>
+      <td class="name"><a title="网络首发论文" href="https://kns.cnki.net/kcms2/article/abstract?v=BBB">网络首发论文</a></td>
+      <td class="author">张三</td>
+      <td class="source">计算机应用</td>
+      <td class="date">2026-10-14 10:40</td>
+      <td class="data">期刊免费</td>
+    </tr>
+  </tbody></table>
+</div>`
