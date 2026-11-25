@@ -3,6 +3,7 @@ import { inspectPdf, countPages } from '../lib/papers.js'
 import { buildFileName, familyName, sanitizeName } from '../lib/naming.js'
 import { ADAPTERS, resolveAdapter } from '../lib/papers.js'
 import { citationKey, mergeRecords, recordKey, toBibtex, toRis } from '../lib/export.js'
+import { creatorOf, toZoteroItem } from '../lib/zotero.js'
 import * as pageScripts from '../lib/page-scripts.js'
 import { apply } from '../index.js'
 
@@ -94,12 +95,30 @@ export default async function run(t) {
   t.ok('ris ends with ER', ris.trim().endsWith('ER  -'))
   t.ok('ris lists both authors', ris.includes('AU  - Zhaoqi Chen') && ris.includes('AU  - Peng Huang'))
 
+  t.section('zotero mapping')
+  t.deepEqual('western name split', creatorOf('Zhaoqi Chen'), { creatorType: 'author', lastName: 'Chen', firstName: 'Zhaoqi' })
+  t.deepEqual('comma form split', creatorOf('Chen, Zhaoqi'), { creatorType: 'author', lastName: 'Chen', firstName: 'Zhaoqi' })
+  t.equal('single name survives', creatorOf('Plato').lastName, 'Plato')
+  const conference = toZoteroItem({
+    title: 'Thermal runaway', authors: ['Zhaoqi Chen', 'Peng Huang'],
+    venue: '2022 6th CAA International Conference on Vehicular Control', year: '2022',
+    doi: '10.1109/CVCI.2022.1', url: 'https://ieeexplore.ieee.org/document/1',
+  })
+  t.equal('conference venue maps to conferencePaper', conference.itemType, 'conferencePaper')
+  t.equal('title kept', conference.title, 'Thermal runaway')
+  t.equal('creators built', conference.creators.length, 2)
+  t.equal('doi kept', conference.DOI, '10.1109/CVCI.2022.1')
+  const journal = toZoteroItem({ title: 'X', venue: 'Neural Networks', year: '2027' })
+  t.equal('journal maps to journalArticle', journal.itemType, 'journalArticle')
+  t.equal('venue becomes publicationTitle', journal.publicationTitle, 'Neural Networks')
+  t.equal('string authors split', toZoteroItem({ title: 'Y', authors: 'A. Author, B. Author' }).creators.length, 2)
+
   t.section('tool schemas')
   const tools = new Map()
   apply({ tools: { register: definition => tools.set(definition.name, definition) }, effect: () => () => {} }, {})
-  t.deepEqual('eight tools registered', [...tools.keys()], [
+  t.deepEqual('nine tools registered', [...tools.keys()], [
     'papers_status', 'papers_open', 'papers_search', 'papers_fetch', 'papers_login', 'papers_access',
-    'papers_export', 'papers_eval',
+    'papers_export', 'papers_zotero', 'papers_eval',
   ])
   for (const [name, tool] of tools) {
     const schema = tool.parameters

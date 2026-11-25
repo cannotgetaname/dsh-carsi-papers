@@ -57,6 +57,7 @@ papers_export   format=bibtex
 | `papers_fetch` | Download one PDF, verify it, save it under `downloadDir`, and append an audit line. |
 | `papers_access` | Open a publisher page and report institution, paywall, and robot-challenge state. |
 | `papers_export` | Write the session's records as BibTeX or RIS for Zotero or another manager. |
+| `papers_zotero` | Write the session's records straight into the local Zotero library. |
 | `papers_login` | Open the institutional sign-in entry and hand the window to the user. |
 | `papers_open` | Open any URL in the research browser; reports title, final URL, and page flags. |
 | `papers_eval` | Run JavaScript in the active page — the escape hatch for an unadapted database. |
@@ -112,6 +113,12 @@ The bundle row accepts these fields (defaults in parentheses):
 | `maxDownloads` (`30`) | Downloads per process before the plugin refuses. |
 | `requestGapMs` (`1500`) | Minimum spacing between publisher requests. |
 | `executablePath` | Chrome/Chromium/Edge binary when discovery fails. |
+
+## Local Zotero
+
+`papers_zotero` talks to Zotero's local HTTP API (`127.0.0.1:23119`). Reads need nothing; the first
+write needs an approval you give once in the Zotero window, and the resulting key is read from
+`ZOTERO_API_KEY` or `$DSH_HOME/zotero-api-key` (mode 600). It is never written into the repository.
 
 ## Tests
 

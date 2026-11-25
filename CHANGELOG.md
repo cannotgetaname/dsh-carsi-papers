@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3
+
+- `papers_zotero`: write the session's records into the local Zotero library through its local API,
+  with a one-time approval in Zotero and the key kept outside the repository.
+- README screenshot of the subscription being recognized, plus a local-Zotero section.
+
 ## 0.3.2
 
 - Repository, homepage and issue tracker metadata; English and Chinese README with badges and a demo.

@@ -6,7 +6,8 @@
  * CDP client over a dedicated Chrome profile (see lib/browser.js).
  */
 
-import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { join } from 'node:path'
 import {
   Browser,
@@ -15,6 +16,7 @@ import {
   isDebugPortAlive,
 } from './lib/browser.js'
 import { mergeRecords, recordKey, toBibtex, toRis } from './lib/export.js'
+import { zoteroWrite } from './lib/zotero.js'
 import { buildFileName, sanitizeName } from './lib/naming.js'
 import { requestHuman } from './lib/notify.js'
 import {
@@ -624,6 +626,54 @@ export function apply(ctx, config = {}) {
       writeFileSync(path, content)
       audit(settings, { action: 'export', format, records: records.length, path })
       return { path, count: records.length, summary: `exported ${records.length} records as ${format}: ${path}` }
+    }),
+  })
+
+  ctx.tools.register({
+    name: 'papers_zotero',
+    description:
+      'Write the records this session has seen straight into the local Zotero library through its '
+      + 'local API. Requires a one-time authorization approved in the Zotero window; the key is read '
+      + 'from ZOTERO_API_KEY or the plugin key file, never from the repository.',
+    parameters: {
+      type: 'object',
+      properties: {
+        scope: {
+          type: 'string',
+          enum: ['downloaded', 'session'],
+          description: 'downloaded (default) writes only records whose PDF was saved; session writes everything seen.',
+        },
+        library: { type: 'string', description: 'Zotero library path; default users/0.' },
+      },
+      additionalProperties: false,
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: true },
+      render: (_args, value) => text(value.summary),
+    },
+    execute: guard(async args => {
+      const seen = [...new Set(runtime.records.values())]
+      const scope = args.scope ?? 'downloaded'
+      const records = scope === 'downloaded'
+        ? seen.filter(record => runtime.downloaded.has(recordKey(record)))
+        : seen
+      if (!records.length) {
+        throw new Error(scope === 'downloaded'
+          ? 'no downloaded records yet; run papers_fetch first (or pass scope: session)'
+          : 'no records seen yet; run papers_search first')
+      }
+      const keyFile = join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'zotero-api-key')
+      const apiKey = process.env.ZOTERO_API_KEY || (existsSync(keyFile) ? readFileSync(keyFile, 'utf8').trim() : '')
+      if (!apiKey) throw new Error(`no Zotero API key; approve one in Zotero and save it to ${keyFile}`)
+      const result = await zoteroWrite(records, { apiKey, library: args.library })
+      audit(settings, { action: 'zotero', scope, requested: records.length, created: result.created })
+      return {
+        ...result,
+        summary: [
+          `Zotero: ${result.created} new item(s), ${result.unchanged} unchanged, ${result.failed} failed`,
+          result.items.length ? `keys: ${result.items.slice(0, 8).join(', ')}${result.items.length > 8 ? ' …' : ''}` : '',
+        ].filter(Boolean).join('\n'),
+      }
     }),
   })
 

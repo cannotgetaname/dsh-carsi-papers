@@ -16,6 +16,12 @@ never reads, types, stores, or replays credentials.
 - Cookies are never exported, logged, or copied into another profile.
 - The audit log records database names, queries, DOIs, file paths, and sizes — not cookies or tokens.
 
+## Zotero key
+
+`papers_zotero` reads its local API key from `ZOTERO_API_KEY` or `$DSH_HOME/zotero-api-key`
+(mode 600). The key is scoped to the local Zotero server, is never committed, and can be revoked in
+Zotero's settings.
+
 ## Access boundaries
 
 The plugin only fetches what the current session is already entitled to. Paywalls and robot checks are
