@@ -46,7 +46,8 @@
     "test": "node test/run.mjs",
     "test:unit": "node test/run.mjs --unit",
     "test:kernel": "node test/kernel.mjs",
-    "test:live": "node test/tools.mjs"
+    "test:live": "node test/tools.mjs",
+    "capture": "node test/capture.mjs"
   },
   "engines": {
     "node": ">=22"
