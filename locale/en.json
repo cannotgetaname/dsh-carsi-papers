@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "CARSI literature browser",
+    "description": "Drives a dedicated Chrome profile through the campus CARSI sign-in to search subscribed databases (IEEE Xplore, Springer, ScienceDirect) and fetch verified full texts, keeping the institutional session.",
+    "detail": "docs/DETAIL.md"
+  }
+}

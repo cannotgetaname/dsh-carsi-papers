@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "CARSI 文献浏览器",
+    "description": "用专用 Chrome 配置承接学校 CARSI 机构授权，在订阅库（IEEE、Springer、ScienceDirect）检索并下载校验过的全文，机构会话长期保留。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

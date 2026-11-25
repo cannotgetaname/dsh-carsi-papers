@@ -1,0 +1,46 @@
+{
+  "name": "dsh-carsi-papers",
+  "version": "0.3.0",
+  "type": "module",
+  "description": "Drive your own browser through the campus CARSI sign-in to search subscribed literature databases and download their full texts.",
+  "keywords": [
+    "dsh",
+    "plugin",
+    "literature",
+    "carsi",
+    "shibboleth",
+    "browser"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "lib",
+    "cordis.patch.yml",
+    "locale",
+    "icon.svg",
+    "README.md",
+    "docs",
+    "LICENSE",
+    "CHANGELOG.md",
+    "SECURITY.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node test/run.mjs",
+    "test:unit": "node test/run.mjs --unit",
+    "test:kernel": "node test/kernel.mjs",
+    "test:live": "node test/tools.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}
