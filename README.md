@@ -58,6 +58,7 @@ papers_export   format=bibtex
 | `papers_access` | Open a publisher page and report institution, paywall, and robot-challenge state. |
 | `papers_export` | Write the session's records as BibTeX or RIS for Zotero or another manager. |
 | `papers_zotero` | Write the session's records straight into the local Zotero library. |
+| `papers_doctor` | Self-check: browser, profile, download directory, every database, Zotero. |
 | `papers_login` | Open the institutional sign-in entry and hand the window to the user. |
 | `papers_open` | Open any URL in the research browser; reports title, final URL, and page flags. |
 | `papers_eval` | Run JavaScript in the active page — the escape hatch for an unadapted database. |

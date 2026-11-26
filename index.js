@@ -16,6 +16,7 @@ import {
   isDebugPortAlive,
 } from './lib/browser.js'
 import { mergeRecords, recordKey, toBibtex, toRis } from './lib/export.js'
+import { runDoctor } from './lib/doctor.js'
 import { zoteroWrite } from './lib/zotero.js'
 import { buildFileName, sanitizeName } from './lib/naming.js'
 import { requestHuman } from './lib/notify.js'
@@ -676,6 +677,29 @@ export function apply(ctx, config = {}) {
           result.items.length ? `keys: ${result.items.slice(0, 8).join(', ')}${result.items.length > 8 ? ' …' : ''}` : '',
         ].filter(Boolean).join('\n'),
       }
+    }),
+  })
+
+  ctx.tools.register({
+    name: 'papers_doctor',
+    description:
+      'Run a self-check of the literature stack: whether the research browser is up, the profile and '
+      + 'download directories are usable, each configured database is reachable, and Zotero answers. '
+      + 'Reports warnings and failures instead of stopping at the first problem.',
+    parameters: { type: 'object', properties: {}, additionalProperties: false },
+    output: {
+      schema: { type: 'object', additionalProperties: true },
+      render: (_args, value) => text(value.summary),
+    },
+    execute: guard(async () => {
+      const keyFile = join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'zotero-api-key')
+      return runDoctor({
+        port: settings.port,
+        profileDir: settings.profileDir,
+        downloadDir: settings.downloadDir,
+        adapters: ADAPTERS,
+        keyFile,
+      })
     }),
   })
 

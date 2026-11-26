@@ -4,6 +4,7 @@ import { buildFileName, familyName, sanitizeName } from '../lib/naming.js'
 import { ADAPTERS, resolveAdapter } from '../lib/papers.js'
 import { citationKey, mergeRecords, recordKey, toBibtex, toRis } from '../lib/export.js'
 import { creatorOf, toZoteroItem } from '../lib/zotero.js'
+import { summarizeChecks } from '../lib/doctor.js'
 import * as pageScripts from '../lib/page-scripts.js'
 import { apply } from '../index.js'
 
@@ -118,12 +119,23 @@ export default async function run(t) {
   t.equal('venue becomes publicationTitle', journal.publicationTitle, 'Neural Networks')
   t.equal('string authors split', toZoteroItem({ title: 'Y', authors: 'A. Author, B. Author' }).creators.length, 2)
 
+  t.section('doctor summary')
+  const line = summarizeChecks([
+    { label: 'browser', status: 'ok', detail: 'up' },
+    { label: 'zotero', status: 'warn', detail: 'no key' },
+    { label: 'disk', status: 'fail', detail: 'denied' },
+  ])
+  t.ok('counts every status', line.startsWith('doctor: 1 ok, 1 warning(s), 1 failure(s)'))
+  t.ok('marks ok', line.includes('✅ browser: up'))
+  t.ok('marks warning', line.includes('⚠️ zotero: no key'))
+  t.ok('marks failure', line.includes('❌ disk: denied'))
+
   t.section('tool schemas')
   const tools = new Map()
   apply({ tools: { register: definition => tools.set(definition.name, definition) }, effect: () => () => {} }, {})
-  t.deepEqual('nine tools registered', [...tools.keys()], [
+  t.deepEqual('ten tools registered', [...tools.keys()], [
     'papers_status', 'papers_open', 'papers_search', 'papers_fetch', 'papers_login', 'papers_access',
-    'papers_export', 'papers_zotero', 'papers_eval',
+    'papers_export', 'papers_zotero', 'papers_doctor', 'papers_eval',
   ])
   for (const [name, tool] of tools) {
     const schema = tool.parameters

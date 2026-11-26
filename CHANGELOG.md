@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0
+
+- `papers_doctor`: one call reports the whole stack — browser, profile, download directory, Node
+  version, Zotero local API and key, and reachability of all five databases (a 403/418 still counts as
+  reachable, because those are bot walls in front of a live site).
+- `lib/doctor.js` keeps the checks testable; the summary format has unit coverage.
+
 ## 0.5.0
 
 - `wanfang` adapter: search through the result page, download through the detail page link. Search is
