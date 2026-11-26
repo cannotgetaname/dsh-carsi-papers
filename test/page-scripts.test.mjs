@@ -1,6 +1,6 @@
 /** Page-function tests: a real headless Chrome renders fixtures, no network needed. */
 import { ADAPTERS, clickByLabel, findInstitutionalEntry, readAccess, readMetadata } from '../lib/papers.js'
-import { cnkiParseGrid, sdSearch, springerSearch } from '../lib/page-scripts.js'
+import { cnkiParseGrid, sdSearch, springerSearch, wanfangSearch } from '../lib/page-scripts.js'
 import { openHtml } from './helpers.mjs'
 import {
   articleMetaHtml,
@@ -11,6 +11,7 @@ import {
   paywallHtml,
   cnkiGridHtml,
   sdSearchHtml,
+  wanfangResultsHtml,
   springerSearchHtml,
 } from './fixtures.mjs'
 
@@ -84,6 +85,18 @@ export default async function run(t, browser) {
   t.equal('extracts the year', cnki.records[0].year, '2026')
   t.equal('unwraps the author cell', cnki.records[0].authors[0], '何香玉郭鹏星卢冰')
   t.equal('flags free content', cnki.records[1].access, 'available')
+
+  t.section('Wanfang result parsing')
+  const wfPage = await openHtml(browser, wanfangResultsHtml)
+  const wf = await wfPage.call(wanfangSearch, 10)
+  await wfPage.close()
+  t.equal('returns both records', wf.length, 2)
+  t.equal('keeps the thesis title', wf[0].title, '脉冲神经网络中结构-功能相互作用的研究')
+  t.equal('builds the detail url', wf[0].url, 'https://d.wanfangdata.com.cn/thesis/D04489532')
+  t.equal('reads the year', wf[0].year, '2025')
+  t.equal('reads the venue', wf[0].venue, '《计算机应用》')
+  t.equal('reads two authors', wf[1].authors.length, 2)
+  t.equal('falls back to the id year', wf[1].year, '2022')
 
   t.section('institutional sign-in entry')
   const loginPage = await openHtml(browser, loginEntryHtml)

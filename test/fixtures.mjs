@@ -89,3 +89,24 @@ export const cnkiGridHtml = `<div id="briefBox">
     </tr>
   </tbody></table>
 </div>`
+
+export const wanfangResultsHtml = `<!doctype html><meta charset="utf-8"><div class="detail-list-wrap">
+  <div class="normal-list periodical-list">
+    <div class="title-area"><div class="ajust">
+      <span class="index">1.</span>
+      <span class="title">脉冲神经网络中结构-功能相互作用的研究</span>
+      <span class="title-id-hidden">thesis_D04489532</span>
+    </div></div>
+    <div class="author-area"><span class="essay-type">学位论文</span><span class="authors">张三</span></div>
+    <div class="source-area"><span class="periodical-title">《计算机应用》</span><span>2025年2期</span><span>有全文</span></div>
+  </div>
+  <div class="normal-list periodical-list">
+    <div class="title-area"><div class="ajust">
+      <span class="index">2.</span>
+      <span class="title">基于微环与相变材料的光学脉冲神经网络加速器</span>
+      <span class="title-id-hidden">periodical_zdhxb202202024</span>
+    </div></div>
+    <div class="author-area"><span class="essay-type">期刊论文</span><span class="authors">李四</span><span class="authors">王五</span></div>
+    <div class="source-area"><span class="periodical-title">《自动化学报》</span><span>2022年3期</span></div>
+  </div>
+</div>`

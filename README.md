@@ -82,6 +82,7 @@ downloads directory, ready to drag into Zotero.
 | `springer` (Springer Nature Link) | result page DOM | article PDF link |
 | `sd` (ScienceDirect) | result page DOM | signed asset URL, fetched in page |
 | `cnki` (中国知网) | site grid endpoint (HTML fragment) | article page `#pdfDown` button |
+| `wanfang` (万方) | result page DOM | detail page download link (needs an institutional balance) |
 
 Adding a database means adding one object to `ADAPTERS` in `lib/papers.js`: `origin`, `match`,
 `search(page, query, options)`, `pdf(page, record)`, and optionally `articleUrl(record)` and

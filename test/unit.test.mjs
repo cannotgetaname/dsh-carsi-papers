@@ -38,7 +38,7 @@ export default async function run(t) {
   )
 
   t.section('adapters')
-  t.deepEqual('four adapters registered', ADAPTERS.map(adapter => adapter.name), ['ieee', 'springer', 'sd', 'cnki'])
+  t.deepEqual('five adapters registered', ADAPTERS.map(adapter => adapter.name), ['ieee', 'springer', 'sd', 'cnki', 'wanfang'])
   for (const adapter of ADAPTERS) {
     t.ok(`${adapter.name} has the required shape`,
       Boolean(adapter.label && adapter.origin && typeof adapter.match === 'function'
@@ -50,6 +50,7 @@ export default async function run(t) {
   t.ok('unknown host resolves to nothing', resolveAdapter('https://example.com/x') === undefined)
   t.ok('name lookup works', resolveAdapter('sd')?.name === 'sd')
   t.ok('cnki matches its host', resolveAdapter('https://kns.cnki.net/kcms2/article/abstract?v=x')?.name === 'cnki')
+  t.ok('wanfang matches its host', resolveAdapter('https://d.wanfangdata.com.cn/periodical/x')?.name === 'wanfang')
 
   t.section('page functions stay self-contained')
   const names = Object.keys(pageScripts).filter(key => typeof pageScripts[key] === 'function')

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- `wanfang` adapter: search through the result page, download through the detail page link. Search is
+  verified live; the download reports an exhausted institutional balance explicitly instead of timing
+  out, which is the state this campus is in today.
+- CNKI: network-first articles without a PDF now fail with a precise reason.
+
 ## 0.4.0
 
 - `cnki` adapter: search through CNKI's own grid endpoint and download through the article page's
