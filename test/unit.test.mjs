@@ -6,6 +6,8 @@ import { citationKey, mergeRecords, recordKey, toBibtex, toGb7714, toRis } from 
 import { needsEnrichment } from '../lib/enrich.js'
 import { creatorOf, toZoteroItem } from '../lib/zotero.js'
 import { summarizeChecks } from '../lib/doctor.js'
+import { parseBibtex, parseNumbered, titleSimilarity, toGb7714 as toGbEntry, verifyEntry } from '../lib/refs.js'
+import { extractIp, judgePool, localAddresses, prefixOf } from '../lib/network.js'
 import * as pageScripts from '../lib/page-scripts.js'
 import { apply } from '../index.js'
 
@@ -150,12 +152,38 @@ export default async function run(t) {
   t.ok('complete record skips', !needsEnrichment({ doi: '10.1/a', authors: ['A'], venue: 'V', year: '2020', title: 'x' }))
   t.ok('no doi skips', !needsEnrichment({ authors: [], title: 'x' }))
 
+  t.section('reference parsing')
+  const refBib = parseBibtex(`@article{x, title={Thermal runaway}, author={A. One and B. Two}, journal={Measurement}, year={2022}, doi={10.1/x}}`)
+  t.equal('bib entries', refBib.length, 1)
+  t.equal('bib title', refBib[0].title, 'Thermal runaway')
+  t.equal('bib authors', refBib[0].authors.length, 2)
+  const numbered = parseNumbered('[1] First, 2019.\n[2] Second, 2020.')
+  t.equal('numbered entries', numbered.length, 2)
+  t.ok('numbered keeps the index', numbered[0].index === 1)
+  t.ok('title similarity is 1 for identical', titleSimilarity('a b c', 'a b c') === 1)
+  t.ok('gb entry has the J tag', toGbEntry({ title: 'X', venue: 'Journal', year: '2020' }, 1).includes('[J]'))
+
+  t.section('reference verification')
+  const mocked = async () => ({ ok: true, status: 200, json: async () => ({ message: { DOI: '10.1/x', title: ['Thermal runaway'], author: [{ family: 'One', given: 'A' }], issued: { 'date-parts': [[2022]] }, 'container-title': ['Measurement'] } }) })
+  const verified = await verifyEntry({ title: 'Thermal runaway', doi: '10.1/x' }, { fetchImpl: mocked })
+  t.equal('doi verified', verified.status, 'verified')
+  t.equal('crossref author mapped', verified.found.authors[0], 'One A')
+
+  t.section('campus network')
+  t.equal('prefix of ipv4', prefixOf('202.113.69.46'), '202.113')
+  t.equal('prefix of ipv6', prefixOf('2001:da8:215::1'), '2001:da8')
+  t.equal('pool judges campus', judgePool(['123.1.1.1', '202.113.1.1'], ['202.113']), 'campus')
+  t.equal('pool judges off-campus', judgePool(['123.1.1.1'], ['202.113']), 'off-campus')
+  t.equal('extracts a decorated ip', extractIp('当前 IP：123.150.255.253 来自于：中国'), '123.150.255.253')
+  t.ok('interfaces skip loopback', localAddresses({ lo: [{ family: 'IPv4', address: '127.0.0.1', internal: true }] }).length === 0)
+
   t.section('tool schemas')
   const tools = new Map()
   apply({ tools: { register: definition => tools.set(definition.name, definition) }, effect: () => () => {} }, {})
-  t.deepEqual('eleven tools registered', [...tools.keys()], [
+  t.deepEqual('fifteen tools registered', [...tools.keys()], [
     'papers_status', 'papers_open', 'papers_search', 'papers_fetch', 'papers_login', 'papers_access',
-    'papers_export', 'papers_zotero', 'papers_enrich', 'papers_doctor', 'papers_eval',
+    'papers_export', 'papers_zotero', 'papers_enrich', 'papers_doctor',
+    'ref_audit', 'ref_format', 'campus_status', 'campus_mark', 'papers_eval',
   ])
   for (const [name, tool] of tools) {
     const schema = tool.parameters

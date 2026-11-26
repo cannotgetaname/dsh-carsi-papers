@@ -60,6 +60,9 @@ papers_export   format=bibtex
 | `papers_enrich` | Fill missing authors, venue, and year from Crossref by DOI. |
 | `papers_zotero` | Write the session's records straight into the local Zotero library. |
 | `papers_doctor` | Self-check: browser, profile, download directory, every database, Zotero. |
+| `ref_audit` | Audit a reference list (.bib/.tex/numbered) against Crossref per entry. |
+| `ref_format` | Emit GB/T 7714 entries, filling missing fields from Crossref. |
+| `campus_status` / `campus_mark` | Judge whether the network is still the recorded campus one. |
 | `papers_login` | Open the institutional sign-in entry and hand the window to the user. |
 | `papers_open` | Open any URL in the research browser; reports title, final URL, and page flags. |
 | `papers_eval` | Run JavaScript in the active page — the escape hatch for an unadapted database. |

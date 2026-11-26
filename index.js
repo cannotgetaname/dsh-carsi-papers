@@ -8,7 +8,7 @@
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import {
   Browser,
   defaultProfileDir,
@@ -18,6 +18,8 @@ import {
 import { enrichRecords } from './lib/enrich.js'
 import { mergeRecords, recordKey, toBibtex, toGb7714, toRis } from './lib/export.js'
 import { runDoctor } from './lib/doctor.js'
+import { egressAddresses, judgePool, loadStore, localAddresses, prefixOf, rememberPrefix, storePath } from './lib/network.js'
+import { parseReferences, toGb7714 as toGb7714Entry, verifyEntry } from './lib/refs.js'
 import { zoteroWrite } from './lib/zotero.js'
 import { buildFileName, sanitizeName } from './lib/naming.js'
 import { requestHuman } from './lib/notify.js'
@@ -140,6 +142,22 @@ async function pace(settings) {
   const wait = runtime.lastRequestAt + settings.requestGapMs - Date.now()
   if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait))
   runtime.lastRequestAt = Date.now()
+}
+
+/** Load references from a file path or from the arguments. */
+function loadReferenceEntries(args) {
+  if (Array.isArray(args.references) && args.references.length) {
+    const entries = []
+    for (const [index, raw] of args.references.entries()) {
+      entries.push(...parseReferences(String(raw), '').map(entry => ({ ...entry, index: index + 1 })))
+    }
+    return entries
+  }
+  if (args.file) {
+    const path = resolve(process.cwd(), args.file)
+    return parseReferences(readFileSync(path, 'utf8'), path)
+  }
+  throw new Error('pass file (a .bib/.tex/.txt path) or references (an array of citation strings)')
 }
 
 /**
@@ -744,6 +762,139 @@ export function apply(ctx, config = {}) {
         adapters: ADAPTERS,
         keyFile,
       })
+    }),
+  })
+
+  ctx.tools.register({
+    name: 'ref_audit',
+    description:
+      'Audit a reference list against Crossref: parse .bib, LaTeX \\bibitem lists, or numbered citations, '
+      + 'then report for each entry whether the DOI resolves, the title matches, or nothing was found.',
+    parameters: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', description: 'Path to a .bib, .tex or numbered .txt reference list.' },
+        references: { type: 'array', items: { type: 'string' }, description: 'Citation strings, when there is no file.' },
+        limit: { type: 'integer', minimum: 1, maximum: 40, description: 'Entries to verify; default 20, max 40.' },
+      },
+      additionalProperties: false,
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: true },
+      render: (_args, value) => text(value.summary),
+    },
+    execute: guard(async args => {
+      const entries = loadReferenceEntries(args).filter(entry => entry.title || entry.raw)
+      if (!entries.length) throw new Error('no reference entries found in that input')
+      const results = []
+      for (const entry of entries.slice(0, Math.min(args.limit ?? 20, 40))) {
+        results.push(await verifyEntry(entry))
+      }
+      const counts = results.reduce((acc, item) => ({ ...acc, [item.status]: (acc[item.status] ?? 0) + 1 }), {})
+      const symbol = status => (['verified', 'verified-by-title'].includes(status) ? '✅'
+        : ['title-mismatch', 'doi-not-found'].includes(status) ? '⚠️' : '❌')
+      return {
+        results,
+        counts,
+        summary: [
+          `checked ${results.length} of ${entries.length} entries: `
+          + Object.entries(counts).map(([status, count]) => `${count} ${status}`).join(', '),
+          ...results.map(item => {
+            const label = (item.entry.title || item.entry.raw || '').slice(0, 70)
+            const note = item.found ? ` → ${String(item.found.title ?? '').slice(0, 60)} (${Math.round(item.similarity * 100)}% title match)` : ''
+            return `${symbol(item.status)} ${label}${note}`
+          }),
+        ].join('\n'),
+      }
+    }),
+  })
+
+  ctx.tools.register({
+    name: 'ref_format',
+    description:
+      'Format a reference list as GB/T 7714 numbered entries, filling missing authors, venue, and year '
+      + 'from Crossref. Useful for a Chinese thesis bibliography.',
+    parameters: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', description: 'Path to a .bib, .tex or numbered .txt reference list.' },
+        references: { type: 'array', items: { type: 'string' }, description: 'Citation strings, when there is no file.' },
+        enrich: { type: 'boolean', description: 'Fill missing fields from Crossref; default true.' },
+        limit: { type: 'integer', minimum: 1, maximum: 40, description: 'Entries to format; default 20, max 40.' },
+      },
+      additionalProperties: false,
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: true },
+      render: (_args, value) => text(value.summary),
+    },
+    execute: guard(async args => {
+      const entries = loadReferenceEntries(args).filter(entry => entry.title || entry.raw)
+      if (!entries.length) throw new Error('no reference entries found in that input')
+      const enrich = args.enrich !== false
+      const formatted = []
+      for (const entry of entries.slice(0, Math.min(args.limit ?? 20, 40))) {
+        let reference = entry
+        if (enrich && (!entry.authors?.length || !entry.venue || !entry.doi)) {
+          const result = await verifyEntry(entry)
+          if (result.found) reference = { ...entry, ...result.found }
+        }
+        formatted.push(toGb7714Entry(reference, formatted.length + 1))
+      }
+      return { entries: formatted, summary: formatted.join('\n') }
+    }),
+  })
+
+  ctx.tools.register({
+    name: 'campus_status',
+    description:
+      'Report the network the machine is on: local interfaces, the public egress addresses, and whether '
+      + 'they match a campus network recorded earlier. Use it before a run that depends on subscription access.',
+    parameters: { type: 'object', properties: {}, additionalProperties: false },
+    output: {
+      schema: { type: 'object', additionalProperties: true },
+      render: (_args, value) => text(value.summary),
+    },
+    execute: guard(async () => {
+      const addresses = localAddresses()
+      const egress = await egressAddresses()
+      const store = loadStore()
+      const verdict = judgePool(egress, store.prefixes)
+      const lines = [
+        `verdict: ${verdict}${verdict === 'unknown' ? ' (no campus network recorded yet; run campus_mark while it works)' : ''}`,
+        `egress: ${egress.length ? egress.map(ip => `${ip} (${prefixOf(ip)})`).join(', ') : 'unavailable'}`,
+        `recorded campus prefixes: ${store.prefixes.length ? store.prefixes.join(', ') : 'none'}`,
+        `local addresses: ${addresses.map(item => `${item.interface} ${item.address}`).join(', ') || 'none'}`,
+      ]
+      if (verdict === 'off-campus') lines.push('note: subscription access usually needs the campus network or a CARSI sign-in')
+      return { verdict, egress, prefixes: store.prefixes, addresses, summary: lines.join('\n') }
+    }),
+  })
+
+  ctx.tools.register({
+    name: 'campus_mark',
+    description:
+      'Record the current public egress addresses as a campus network, so campus_status can tell later '
+      + 'whether the machine has left it. Run it while database access is known to work.',
+    parameters: {
+      type: 'object',
+      properties: { label: { type: 'string', description: 'Optional note, for example the campus name.' } },
+      additionalProperties: false,
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: true },
+      render: (_args, value) => text(value.summary),
+    },
+    execute: guard(async args => {
+      const egress = await egressAddresses()
+      if (!egress.length) throw new Error('could not determine the public egress address; check the network first')
+      let store = loadStore()
+      for (const address of egress) store = rememberPrefix(prefixOf(address))
+      return {
+        prefixes: store.prefixes,
+        summary: `recorded ${egress.map(ip => `${prefixOf(ip)}.x`).join(', ')} as campus`
+          + `${args.label ? ` (${args.label})` : ''}; ${store.prefixes.length} prefix(es) known`,
+      }
     }),
   })
 

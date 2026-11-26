@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0
+
+- Reference auditing folded in: `ref_audit` (parse .bib / LaTeX / numbered lists, verify each entry
+  against Crossref) and `ref_format` (GB/T 7714 output with Crossref backfill).
+- Campus checks folded in: `campus_status` / `campus_mark`. The campus NAT answers with several
+  egress addresses (111.160.x and 123.150.x observed), so the verdict uses the pool of recorded
+  prefixes rather than one address.
+- The BibTeX parser now balances braces, so single-line and nested-brace entries parse.
+- 191 offline checks.
+
 ## 0.7.0
 
 - `papers_enrich`: fills missing authors, venue, and year through Crossref by DOI — verified live on a
