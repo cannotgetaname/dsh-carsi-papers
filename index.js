@@ -110,13 +110,45 @@ function bumpDownloads(exec) {
 }
 
 /**
- * Wrap a tool body: serialize it against other browser work, optionally retry, and
- * turn a failure into a readable tool error instead of a stack trace.
+ * Copy a tool value into plain JSON data.
+ *
+ * DSH rejects any tool result that does not survive a JSON round trip, and one
+ * stray `undefined` (a missing BibTeX venue, say) fails the whole call. Parsers
+ * already prefer null; this is the belt to that pair of braces, and it also keeps
+ * a hostile page value from reaching the session log.
+ */
+export function lossless(value, depth = 0) {
+  if (depth > 24) return null
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return value
+  if (typeof value === 'number') return Number.isFinite(value) && !Object.is(value, -0) ? value : null
+  if (typeof value === 'bigint') return value.toString()
+  if (typeof value === 'symbol' || typeof value === 'function') return String(value)
+  if (Array.isArray(value)) {
+    return value.map(item => (item === undefined ? null : lossless(item, depth + 1)))
+  }
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString()
+  if (value instanceof Error) return { name: value.name, message: value.message }
+  if (typeof value === 'object') {
+    const output = {}
+    for (const key of Object.keys(value)) {
+      const item = value[key]
+      if (item === undefined) continue
+      output[key] = lossless(item, depth + 1)
+    }
+    return output
+  }
+  return null
+}
+
+/**
+ * Wrap a tool body: serialize it against other browser work, optionally retry,
+ * normalize the value to lossless JSON, and turn a failure into a readable tool
+ * error instead of a stack trace.
  */
 function guard(fn, { retries = 1 } = {}) {
   return (args, exec) => serialize(async () => {
     try {
-      return await withRetry(() => fn(args, exec), { attempts: retries })
+      return lossless(await withRetry(() => fn(args, exec), { attempts: retries }))
     } catch (error) {
       throw new Error(`[${error.name || 'Error'}] ${error.message}`)
     }

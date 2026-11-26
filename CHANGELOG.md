@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.1
+
+- Fix: `ref_audit` / `ref_format` failed on any reference list whose entries lacked a journal or
+  year. The parsers emitted `venue: undefined`, and DSH rejects a tool value that does not survive a
+  JSON round trip, so the whole call came back as "value is not lossless JSON". Parsers now use
+  `null`, and `guard` normalizes every tool value to plain JSON as a second line of defence.
+- Crossref requests identify as `dsh-carsi-papers`, not the retired `dsh-ref-doctor`.
+- 242 offline checks.
+
 ## 0.8.0
 
 - Reference auditing folded in: `ref_audit` (parse .bib / LaTeX / numbered lists, verify each entry

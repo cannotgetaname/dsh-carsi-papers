@@ -6,10 +6,10 @@ import { citationKey, mergeRecords, recordKey, toBibtex, toGb7714, toRis } from 
 import { needsEnrichment } from '../lib/enrich.js'
 import { creatorOf, toZoteroItem } from '../lib/zotero.js'
 import { summarizeChecks } from '../lib/doctor.js'
-import { parseBibtex, parseNumbered, titleSimilarity, toGb7714 as toGbEntry, verifyEntry } from '../lib/refs.js'
+import { parseBibtex, parseNumbered, parseTex, titleSimilarity, toGb7714 as toGbEntry, verifyEntry } from '../lib/refs.js'
 import { extractIp, judgePool, localAddresses, prefixOf } from '../lib/network.js'
 import * as pageScripts from '../lib/page-scripts.js'
-import { apply } from '../index.js'
+import { apply, lossless } from '../index.js'
 
 export default async function run(t) {
   t.section('naming')
@@ -161,6 +161,14 @@ export default async function run(t) {
   t.equal('numbered entries', numbered.length, 2)
   t.ok('numbered keeps the index', numbered[0].index === 1)
   t.ok('title similarity is 1 for identical', titleSimilarity('a b c', 'a b c') === 1)
+  // A BibTeX entry without journal/booktitle used to carry `venue: undefined`, and
+  // DSH rejects a whole tool result for that: parseBibtex must use null.
+  const bare = parseBibtex('@misc{y, title={No venue here}, author={A. One}}')[0]
+  t.ok('bib missing venue is null, not undefined', bare.venue === null, `venue=${String(bare.venue)}`)
+  t.ok('bib missing year is null', bare.year === null)
+  t.ok('bib entry has no undefined field', Object.values(bare).every(value => value !== undefined))
+  const texEntry = parseTex('\\bibitem{z} \\end{thebibliography}')[0]
+  t.ok('tex entry has no undefined field', Object.values(texEntry).every(value => value !== undefined))
   t.ok('gb entry has the J tag', toGbEntry({ title: 'X', venue: 'Journal', year: '2020' }, 1).includes('[J]'))
 
   t.section('reference verification')
@@ -168,6 +176,17 @@ export default async function run(t) {
   const verified = await verifyEntry({ title: 'Thermal runaway', doi: '10.1/x' }, { fetchImpl: mocked })
   t.equal('doi verified', verified.status, 'verified')
   t.equal('crossref author mapped', verified.found.authors[0], 'One A')
+
+  t.section('lossless tool values')
+  t.equal('undefined object field is dropped', Object.hasOwn(lossless({ a: undefined, b: 1 }), 'a'), false)
+  t.equal('undefined array slot becomes null', JSON.stringify(lossless([1, undefined])), '[1,null]')
+  t.equal('NaN becomes null', lossless(Number.NaN), null)
+  t.equal('-0 becomes null', lossless(-0), null)
+  t.equal('nested clean keeps data', JSON.stringify(lossless({ a: [{ b: 2 }] })), '{"a":[{"b":2}]}')
+  t.equal('date becomes iso text', lossless(new Date(Date.UTC(2026, 0, 2))), '2026-01-02T00:00:00.000Z')
+  const cyclic = { name: 'page' }
+  cyclic.self = cyclic
+  t.ok('cycle is cut', typeof lossless(cyclic).self === 'object')
 
   t.section('campus network')
   t.equal('prefix of ipv4', prefixOf('202.113.69.46'), '202.113')
