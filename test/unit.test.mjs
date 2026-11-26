@@ -2,7 +2,8 @@
 import { inspectPdf, countPages } from '../lib/papers.js'
 import { buildFileName, familyName, sanitizeName } from '../lib/naming.js'
 import { ADAPTERS, resolveAdapter } from '../lib/papers.js'
-import { citationKey, mergeRecords, recordKey, toBibtex, toRis } from '../lib/export.js'
+import { citationKey, mergeRecords, recordKey, toBibtex, toGb7714, toRis } from '../lib/export.js'
+import { needsEnrichment } from '../lib/enrich.js'
 import { creatorOf, toZoteroItem } from '../lib/zotero.js'
 import { summarizeChecks } from '../lib/doctor.js'
 import * as pageScripts from '../lib/page-scripts.js'
@@ -130,12 +131,31 @@ export default async function run(t) {
   t.ok('marks warning', line.includes('⚠️ zotero: no key'))
   t.ok('marks failure', line.includes('❌ disk: denied'))
 
+  t.section('GB/T 7714 export')
+  const gb = toGb7714([
+    { title: '基于微环的脉冲神经网络', authors: ['何香玉', '郭鹏星', '卢冰', '李斌'], venue: '中国激光', year: '2026' },
+    { title: 'Conference paper', authors: ['Zhaoqi Chen'], venue: '2022 6th CAA International Conference', year: '2022' },
+    { title: 'A thesis', authors: [], venue: '学位论文', year: '2025' },
+  ])
+  t.ok('numbers entries', gb.startsWith('[1] '))
+  t.ok('truncates to three authors with 等', gb.includes('何香玉, 郭鹏星, 卢冰, 等.'))
+  t.ok('tags a journal as J', gb.includes('[J]. 中国激光, 2026.'))
+  t.ok('tags a conference as C', gb.includes('[C].'))
+  t.ok('tags a thesis as D', gb.includes('[D].'))
+  t.ok('falls back for missing authors', gb.includes('佚名'))
+
+  t.section('enrichment need')
+  t.ok('needs authors', needsEnrichment({ doi: '10.1/a', title: 'x' }))
+  t.ok('needs venue', needsEnrichment({ doi: '10.1/a', authors: ['A'], title: 'x' }))
+  t.ok('complete record skips', !needsEnrichment({ doi: '10.1/a', authors: ['A'], venue: 'V', year: '2020', title: 'x' }))
+  t.ok('no doi skips', !needsEnrichment({ authors: [], title: 'x' }))
+
   t.section('tool schemas')
   const tools = new Map()
   apply({ tools: { register: definition => tools.set(definition.name, definition) }, effect: () => () => {} }, {})
-  t.deepEqual('ten tools registered', [...tools.keys()], [
+  t.deepEqual('eleven tools registered', [...tools.keys()], [
     'papers_status', 'papers_open', 'papers_search', 'papers_fetch', 'papers_login', 'papers_access',
-    'papers_export', 'papers_zotero', 'papers_doctor', 'papers_eval',
+    'papers_export', 'papers_zotero', 'papers_enrich', 'papers_doctor', 'papers_eval',
   ])
   for (const [name, tool] of tools) {
     const schema = tool.parameters

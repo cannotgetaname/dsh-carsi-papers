@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0
+
+- `papers_enrich`: fills missing authors, venue, and year through Crossref by DOI — verified live on a
+  ScienceDirect record that arrived with no authors (six were recovered).
+- `papers_export` gains **GB/T 7714**, the numbered style Chinese theses use.
+- Ideas borrowed from sibling plugins: GB/T 7714 from `dsh-cite`, Crossref verification from
+  `dsh-reference-checker`, Crossref/OpenAlex enrichment from `dsh-lit-harvest`.
+
 ## 0.6.0
 
 - `papers_doctor`: one call reports the whole stack — browser, profile, download directory, Node

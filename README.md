@@ -56,7 +56,8 @@ papers_export   format=bibtex
 | `papers_search` | Search a database; returns normalized records with each item's access state. |
 | `papers_fetch` | Download one PDF, verify it, save it under `downloadDir`, and append an audit line. |
 | `papers_access` | Open a publisher page and report institution, paywall, and robot-challenge state. |
-| `papers_export` | Write the session's records as BibTeX or RIS for Zotero or another manager. |
+| `papers_export` | Write the session's records as BibTeX, RIS, or GB/T 7714 for Zotero or a paper. |
+| `papers_enrich` | Fill missing authors, venue, and year from Crossref by DOI. |
 | `papers_zotero` | Write the session's records straight into the local Zotero library. |
 | `papers_doctor` | Self-check: browser, profile, download directory, every database, Zotero. |
 | `papers_login` | Open the institutional sign-in entry and hand the window to the user. |

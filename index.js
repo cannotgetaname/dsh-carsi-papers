@@ -15,7 +15,8 @@ import {
   ensureChrome,
   isDebugPortAlive,
 } from './lib/browser.js'
-import { mergeRecords, recordKey, toBibtex, toRis } from './lib/export.js'
+import { enrichRecords } from './lib/enrich.js'
+import { mergeRecords, recordKey, toBibtex, toGb7714, toRis } from './lib/export.js'
 import { runDoctor } from './lib/doctor.js'
 import { zoteroWrite } from './lib/zotero.js'
 import { buildFileName, sanitizeName } from './lib/naming.js'
@@ -596,7 +597,11 @@ export function apply(ctx, config = {}) {
     parameters: {
       type: 'object',
       properties: {
-        format: { type: 'string', enum: ['bibtex', 'ris'], description: 'File format; default bibtex.' },
+        format: {
+          type: 'string',
+          enum: ['bibtex', 'ris', 'gb7714'],
+          description: 'File format; default bibtex. gb7714 is the numbered style Chinese theses use.',
+        },
         scope: {
           type: 'string',
           enum: ['downloaded', 'session'],
@@ -622,8 +627,11 @@ export function apply(ctx, config = {}) {
           : 'no records seen yet; run papers_search first')
       }
       const format = args.format ?? 'bibtex'
-      const content = format === 'ris' ? toRis(records) : toBibtex(records)
-      const name = args.outFile || `carsi-records.${format === 'ris' ? 'ris' : 'bib'}`
+      const content = format === 'ris' ? toRis(records)
+        : format === 'gb7714' ? toGb7714(records)
+          : toBibtex(records)
+      const extension = format === 'ris' ? 'ris' : format === 'gb7714' ? 'txt' : 'bib'
+      const name = args.outFile || `carsi-records.${extension}`
       mkdirSync(settings.downloadDir, { recursive: true })
       const path = join(settings.downloadDir, name)
       writeFileSync(path, content)
@@ -677,6 +685,42 @@ export function apply(ctx, config = {}) {
           result.items.length ? `keys: ${result.items.slice(0, 8).join(', ')}${result.items.length > 8 ? ' …' : ''}` : '',
         ].filter(Boolean).join('\n'),
       }
+    }),
+  })
+
+  ctx.tools.register({
+    name: 'papers_enrich',
+    description:
+      'Fill missing authors, venue, and year for the records this session has seen by asking Crossref '
+      + 'for their DOI. Useful after CNKI or ScienceDirect searches, whose result lists often omit those '
+      + 'fields; enriched records are what export and Zotero write.',
+    parameters: {
+      type: 'object',
+      properties: {
+        scope: {
+          type: 'string',
+          enum: ['downloaded', 'session'],
+          description: 'downloaded (default) enriches only records whose PDF was saved; session enriches everything seen.',
+        },
+      },
+      additionalProperties: false,
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: true },
+      render: (_args, value) => text(value.summary),
+    },
+    execute: guard(async args => {
+      const seen = [...new Set(runtime.records.values())]
+      const scope = args.scope ?? 'downloaded'
+      const records = scope === 'downloaded'
+        ? seen.filter(record => runtime.downloaded.has(recordKey(record)))
+        : seen
+      if (!records.length) throw new Error('no records to enrich yet; run papers_search first')
+      const filled = await enrichRecords(records)
+      audit(settings, { action: 'enrich', scope, requested: records.length, filled: filled.length })
+      const lines = [`enriched ${filled.length}/${records.length} record(s) from Crossref`]
+      for (const item of filled.slice(0, 10)) lines.push(`  ${item.doi} → ${item.changed.join(', ')}`)
+      return { filled, summary: lines.join('\n') }
     }),
   })
 
