@@ -10,7 +10,8 @@
 English | [中文](README.zh.md)
 
 
-Campus-subscribed literature access for DeepSeek Harness, driven through a dedicated browser.
+Campus-subscribed literature access for DeepSeek Harness, driven through a dedicated browser:
+**CNKI (中国知网), Wanfang (万方), IEEE Xplore, ScienceDirect and Springer Nature Link**.
 
 Open-access finders stop where the paywall starts. Campus subscriptions live behind an institutional
 sign-in (CARSI / Shibboleth) or a campus IP, so this plugin keeps its own Chrome profile with a local

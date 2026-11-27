@@ -1,6 +1,6 @@
 {
   "name": "dsh-carsi-papers",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "type": "module",
   "description": "Drive your own browser through the campus CARSI sign-in to search subscribed literature databases and download their full texts.",
   "keywords": [
@@ -17,7 +17,23 @@
     "paper-search",
     "pdf",
     "plugin",
-    "shibboleth"
+    "shibboleth",
+    "cnki",
+    "wanfang",
+    "知网",
+    "万方",
+    "ieee",
+    "springer",
+    "sciencedirect",
+    "gb7714",
+    "gb-t-7714",
+    "zotero",
+    "bibtex",
+    "crossref",
+    "reference-audit",
+    "paper-download",
+    "carsi-papers",
+    "chinese-academic"
   ],
   "exports": {
     ".": "./index.js",

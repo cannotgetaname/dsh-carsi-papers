@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.2
+
+- Docs and discoverability only, no behaviour change. The Chinese README listed three databases and
+  seven tools; it now covers all five adapters (CNKI and Wanfang included), all fifteen tools, and the
+  reference-audit and campus-check commands, so searching for 知网 / 万方 finds the plugin.
+- `package.json` keywords gain the database names, GB/T 7714 and reference auditing.
+
 ## 0.8.1
 
 - Fix: `ref_audit` / `ref_format` failed on any reference list whose entries lacked a journal or

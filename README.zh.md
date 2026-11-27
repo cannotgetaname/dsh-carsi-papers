@@ -1,12 +1,17 @@
 # dsh-carsi-papers
 
+<img src="docs/images/icon-180.png" width="96" alt="plugin icon">
+
 [![npm version](https://img.shields.io/npm/v/dsh-carsi-papers)](https://www.npmjs.com/package/dsh-carsi-papers)
 [![license](https://img.shields.io/npm/l/dsh-carsi-papers)](LICENSE)
+[![CI](https://github.com/cannotgetaname/dsh-carsi-papers/actions/workflows/ci.yml/badge.svg)](https://github.com/cannotgetaname/dsh-carsi-papers/actions/workflows/ci.yml)
 
 [English](README.md) | 中文
 
-让 DeepSeek Harness 直接使用**你自己的浏览器**，在校园网订阅的数据库（IEEE Xplore / ScienceDirect /
-Springer Nature Link）里检索、下载并校验全文——而不是只拿到公开的 OA 副本和预印本。
+让 DeepSeek Harness 直接使用**你自己的浏览器**，在校园网（CARSI / Shibboleth 机构登录，或校园 IP）订阅
+的数据库里检索、下载并校验全文——而不是只拿到公开的 OA 副本和预印本。
+
+支持的数据库：**中国知网 CNKI、万方 Wanfang、IEEE Xplore、ScienceDirect、Springer Nature Link**。
 
 ## 为什么做这个
 
@@ -28,7 +33,7 @@ papers_fetch    publisher=springer url=https://link.springer.com/article/10.1038
 → 已保存：refs/2025-Yang-Spiking dynamics of individual neurons ….pdf
   2.4 MB · 12 页 · PDF 校验通过
 
-papers_export   format=bibtex
+papers_export   format=gb7714
 → refs/carsi-records.bib（只导出已下载的记录）
 ```
 
@@ -39,10 +44,29 @@ papers_export   format=bibtex
 | `papers_status` | 浏览器是否在跑、端口、profile 目录、已开标签 |
 | `papers_search` | 单库或多库检索，按 DOI 合并去重，标注访问状态 |
 | `papers_fetch` | 下载 PDF、校验魔数与页数、命名落盘、写审计 |
-| `papers_export` | 把会话记录导出为 BibTeX / RIS |
+| `papers_export` | 把会话记录导出为 BibTeX / RIS / GB/T 7714 |
 | `papers_access` | 报告机构身份 / 付费墙 / 人机验证状态 |
 | `papers_login` | 打开机构登录入口，把窗口交给你（不代填凭据） |
+| `papers_enrich` | 按 DOI 从 Crossref 补齐缺失的作者、刊名、年份 |
+| `papers_zotero` | 把会话记录直接写进本地 Zotero 库 |
+| `papers_doctor` | 自检：浏览器、profile、下载目录、五个库、Zotero |
+| `ref_audit` | 拿 Crossref 逐条核对参考文献表（.bib / LaTeX / 编号列表） |
+| `ref_format` | 输出 GB/T 7714 编号条目，缺字段自动从 Crossref 补 |
+| `campus_status` / `campus_mark` | 记录校园网出口地址，之后判断是否还在这张网上 |
 | `papers_open` / `papers_eval` | 打开任意页面 / 页内执行 JS（未适配库的兜底） |
+
+## 支持的数据库
+
+| 适配器 | 检索 | PDF |
+|---|---|---|
+| `cnki`（中国知网） | 站点 grid 接口（HTML 片段） | 文章页 `#pdfDown` 按钮 |
+| `wanfang`（万方） | 结果页 DOM | 详情页下载链接（需机构额度） |
+| `ieee`（IEEE Xplore） | 站点 REST 接口 | 带戳 PDF 端点 |
+| `sd`（ScienceDirect） | 结果页 DOM | 签名资源地址，页内取回 |
+| `springer`（Springer Nature Link） | 结果页 DOM | 文章 PDF 链接 |
+
+新增一个库 = 在 `lib/papers.js` 的 `ADAPTERS` 里加一个对象：`origin`、`match`、
+`search(page, query, options)`、`pdf(page, record)`，可选 `articleUrl(record)` 与 `metadata(page)`。
 
 ## 安装
 
@@ -63,7 +87,7 @@ dsh plugin --profile <profile> add dsh-carsi-papers
 ## 测试
 
 ```sh
-npm test          # 126 项离线检查（单测 + headless Chrome fixtures + schema）
+npm test          # 242 项离线检查（单测 + headless Chrome fixtures + schema）
 npm run test:unit # 不需要浏览器
 npm run test:live # 可选：真实检索与下载
 ```
@@ -73,5 +97,6 @@ npm run test:live # 可选：真实检索与下载
 - 独立 profile 意味着每个库首次访问可能要手动登录一次，会话过期后同理。
 - 人机验证只能由人完成。
 - IEEE 页面没有 Highwire 元数据标签，文件名依赖检索时缓存的记录。
+- 万方下载要求机构账号仍有额度，额度用尽会明确报错而不是反复重试。
 
 MIT License。
